@@ -8,14 +8,22 @@ import Testimonial from "@/components/Testimonial";
 import GallerySection from "@/components/GallerySection";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
-export default function Home() {
+import { prisma } from "@/lib/db";
+
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+    const catalogItems = await prisma.chickenItem.findMany({
+        orderBy: { createdAt: "asc" },
+    });
+
     return (
         <>
             <Navbar />
             <main className="flex-grow pt-14">
                 <HeroSection />
                 <HighlightSection />
-                <ChickenCatalog />
+                <ChickenCatalog initialItems={catalogItems} />
                 <CareStandard />
                 <Testimonial />
                 <GallerySection />
