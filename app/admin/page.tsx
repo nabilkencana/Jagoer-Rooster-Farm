@@ -127,30 +127,32 @@ export default function AdminPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Limit to 1.5MB to keep base64 string small and optimize DB size
+    const maxSize = 1.5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setErrorMessage("Ukuran gambar terlalu besar. Maksimal 1.5MB untuk optimasi database.");
+      return;
+    }
+
     setUploading(true);
     setErrorMessage("");
 
-    const formData = new FormData();
-    formData.append("file", file);
-
     try {
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setForm((prev) => ({ ...prev, image: data.url }));
-        setSuccessMessage("Gambar berhasil diunggah.");
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setForm((prev) => ({ ...prev, image: base64String }));
+        setSuccessMessage("Gambar berhasil diproses.");
+        setUploading(false);
         setTimeout(() => setSuccessMessage(""), 3000);
-      } else {
-        setErrorMessage(data.error || "Gagal mengunggah gambar");
-      }
+      };
+      reader.onerror = () => {
+        setErrorMessage("Gagal memproses file gambar.");
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
     } catch (err) {
-      setErrorMessage("Terjadi kesalahan jaringan saat mengunggah.");
-    } finally {
+      setErrorMessage("Terjadi kesalahan saat membaca gambar.");
       setUploading(false);
     }
   }
